@@ -42,7 +42,6 @@ export default function HomeScreen() {
       const note = await fetchDailyNote(session?.user.id || "", date);
 
       if (note) {
-        console.log("setting found daily note", note.id, note.title);
         setNote(note);
       } else {
         // create a new note for the current date if it doesnt exist
@@ -56,7 +55,7 @@ export default function HomeScreen() {
             note.createdAt = createdAt;
             note.updatedAt = createdAt;
           });
-          console.log("setting new daily note", newNote.id, newNote.title);
+
           setNote(newNote);
         });
       }
@@ -79,7 +78,6 @@ export default function HomeScreen() {
         {/*left arrow to change date*/}
         <Pressable
           onPress={() => {
-            console.log("left pressed");
             setDate(date.subtract(1, "day"));
           }}
         >
@@ -91,7 +89,6 @@ export default function HomeScreen() {
         {/*right arrow to change date*/}
         <Pressable
           onPress={() => {
-            console.log("right pressed");
             // only allow current or past dates
             if (dayjs().isAfter(date, "day")) {
               setDate(date.add(1, "day"));

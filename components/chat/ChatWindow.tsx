@@ -24,6 +24,8 @@ import { database, Message } from "@/lib/watermelon";
 import { useSession } from "@/contexts/SessionContext";
 import dayjs from "dayjs";
 import { Q } from "@nozbe/watermelondb";
+import { syncAndHandleErrors } from "@/lib/sync";
+import { lg } from "@/utils/noProd";
 
 const writeNewMessage = async (
   userId: string,
@@ -75,7 +77,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
         .get<Message>("messages")
         .query(Q.where("note_id", noteId))
         .fetch();
-      console.log("loaded messages", messages);
+      lg("loaded messages");
       setMessages(messages);
 
       // Initialize animation values for existing messages
@@ -96,6 +98,8 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
       noteId,
       inputText
     );
+
+    void syncAndHandleErrors({ userId: session?.user.id || "" });
 
     animatedValues.current[newMessage.id] = new Animated.Value(0);
 
