@@ -61,7 +61,7 @@ export default function SignIn() {
     if (error) {
       Alert.alert(error.message);
     } else {
-      router.push("/(tabs)/");
+      router.push("/(app)/");
     }
     setLoading(false);
   }
