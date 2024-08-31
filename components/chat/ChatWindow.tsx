@@ -20,82 +20,87 @@ import {
 } from "@/constants/Colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Crypto from "expo-crypto";
+import { database, Message } from "@/lib/watermelon";
+import { useSession } from "@/contexts/SessionContext";
+import dayjs from "dayjs";
+import { Q } from "@nozbe/watermelondb";
 
-// const useKeyboardHeight = () => {
-//   const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-//   useEffect(() => {
-//     const showListener = Keyboard.addListener(
-//       Platform.OS === "android" ? "keyboardDidShow" : "keyboardWillShow",
-//       (e) => setKeyboardHeight(e.endCoordinates.height)
-//     );
-//     const hideListener = Keyboard.addListener(
-//       Platform.OS === "android" ? "keyboardDidHide" : "keyboardWillHide",
-//       () => setKeyboardHeight(0)
-//     );
-//     return () => {
-//       showListener.remove();
-//       hideListener.remove();
-//     };
-//   }, []);
-
-//   return keyboardHeight;
-// };
+const writeNewMessage = async (
+  userId: string,
+  noteId: string,
+  content: string
+) => {
+  const createdAt = dayjs().toDate();
+  return await database.write(async () => {
+    const newMessage = await database
+      .get<Message>("messages")
+      .create((message) => {
+        message.userId = userId;
+        message.noteId = noteId;
+        message.content = content;
+        message.createdAt = createdAt;
+        message.updatedAt = createdAt;
+      });
+    return newMessage;
+  });
+};
 
 interface AnimatedValues {
   [key: string]: Animated.Value;
 }
 
 interface ChatViewProps {
+  noteId: string;
   additionalKeyboardOffset?: number;
 }
 
-const ChatView = ({ additionalKeyboardOffset = 0 }: ChatViewProps) => {
-  const [messages, setMessages] = useState<
-    { id: string; text: string; sender: string }[]
-  >([]);
+const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
+  const { session } = useSession();
+  const [messages, setMessages] = useState<Message[]>([]);
   const theme = useColorScheme() ?? "light";
   const [inputText, setInputText] = useState("");
   const animatedValues = useRef<AnimatedValues>({});
   const flatListRef = useRef<FlatList<any>>(null);
   const inputRef = useRef<TextInput>(null);
-  // const keyboardHeight = useKeyboardHeight();
-  const backgroundColor = useThemeColor({}, "background");
   const cardBackground = useThemeColor({}, "cardBackground");
   const textColor = useThemeColor({}, "text");
   const bubbleBackgroundColor =
     theme === "light" ? pastelGreen500 : pastelGreen500;
   const insets = useSafeAreaInsets();
 
-  // useEffect(() => {
-  //   const keyboardDidShowListener = Keyboard.addListener(
-  //     "keyboardDidShow",
-  //     handleKeyboardShow
-  //   );
-  //   return () => {
-  //     keyboardDidShowListener.remove();
-  //   };
-  // }, []);
+  // load messages for the note
+  useEffect(() => {
+    const loadMessages = async () => {
+      const messages = await database
+        .get<Message>("messages")
+        .query(Q.where("note_id", noteId))
+        .fetch();
+      console.log("loaded messages", messages);
+      setMessages(messages);
 
-  // const handleKeyboardShow = () => {
-  //   if (flatListRef.current && messages.length > 0) {
-  //     flatListRef.current.scrollToEnd({ animated: true });
-  //   }
-  // };
-
-  const sendMessage = () => {
-    if (inputText.trim() === "") return;
-
-    const newMessage = {
-      id: Date.now().toString(),
-      text: inputText + " " + Crypto.randomUUID(),
-      sender: "user",
+      // Initialize animation values for existing messages
+      messages.forEach((message) => {
+        if (!animatedValues.current[message.id]) {
+          animatedValues.current[message.id] = new Animated.Value(1);
+        }
+      });
     };
+    loadMessages();
+  }, [noteId]);
+
+  const sendMessage = async () => {
+    if (inputText.trim() === "" || !noteId) return;
+
+    const newMessage = await writeNewMessage(
+      session?.user.id || "",
+      noteId,
+      inputText
+    );
+
+    animatedValues.current[newMessage.id] = new Animated.Value(0);
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputText("");
-
-    animatedValues.current[newMessage.id] = new Animated.Value(0);
 
     Animated.spring(animatedValues.current[newMessage.id], {
       toValue: 1,
@@ -111,11 +116,7 @@ const ChatView = ({ additionalKeyboardOffset = 0 }: ChatViewProps) => {
     inputRef.current?.focus();
   };
 
-  const renderMessage = ({
-    item,
-  }: {
-    item: { id: string; text: string; sender: string };
-  }) => {
+  const renderMessage = ({ item }: { item: Message }) => {
     const animatedStyle = {
       transform: [
         {
@@ -147,7 +148,7 @@ const ChatView = ({ additionalKeyboardOffset = 0 }: ChatViewProps) => {
             },
           ]}
         >
-          {item.text}
+          {item.content}
         </Text>
       </Animated.View>
     );

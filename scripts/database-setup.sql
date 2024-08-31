@@ -41,7 +41,7 @@ CREATE OR REPLACE FUNCTION public.create_note(
     p_user_id UUID,
     p_title TEXT,
     p_note_type public.note_type,
-    p_date DATE,
+    p_date timestamp with time zone,
     p_created_at timestamp with time zone,
     p_updated_at timestamp with time zone
 ) RETURNS UUID AS $$
@@ -52,7 +52,7 @@ BEGIN
     IF p_note_type = 'daily' THEN
         SELECT id INTO v_existing_id
         FROM public.notes
-        WHERE user_id = p_user_id AND date = p_date AND note_type = 'daily' AND deleted_at IS NULL;
+        WHERE user_id = p_user_id AND date = p_date::date AND note_type = 'daily' AND deleted_at IS NULL;
         
         IF v_existing_id IS NOT NULL THEN
             -- Update the existing daily note
@@ -105,7 +105,7 @@ CREATE OR REPLACE FUNCTION public.update_note(
     p_id UUID,
     p_title TEXT,
     p_note_type public.note_type,
-    p_date DATE,
+    p_date timestamp with time zone,
     p_updated_at timestamp with time zone
 ) RETURNS BOOLEAN AS $$
 BEGIN
@@ -181,7 +181,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- PULL FUNCTION
-CREATE OR REPLACE FUNCTION public.pull(last_pulled_at bigint DEFAULT 0, user_id uuid DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.pull(last_pulled_at bigint DEFAULT 0, p_user_id uuid DEFAULT NULL)
 RETURNS jsonb AS $$
 DECLARE
     _ts timestamp with time zone;
@@ -202,7 +202,7 @@ BEGIN
                     'user_id', n.user_id,
                     'title', n.title,
                     'note_type', n.note_type,
-                    'date', n.date,
+                    'date', timestamp_to_epoch(n.date),
                     'created_at', timestamp_to_epoch(n.created_at),
                     'updated_at', timestamp_to_epoch(n.updated_at)
                 )
@@ -216,7 +216,7 @@ BEGIN
         )
     ) INTO _notes
     FROM notes n
-    WHERE (n.user_id = user_id); -- this is where we do user_id check instead of in the FILTER
+    WHERE (n.user_id = p_user_id); -- this is where we do user_id check instead of in the FILTER
 
     -- Messages
     SELECT jsonb_build_object(
@@ -243,7 +243,7 @@ BEGIN
     ) INTO _messages
     FROM messages m
     JOIN notes n ON m.note_id = n.id
-    WHERE (n.user_id = user_id);
+    WHERE (n.user_id = p_user_id);
 
     RETURN jsonb_build_object(
         'changes',
@@ -272,7 +272,7 @@ BEGIN
             (new_note->>'user_id')::uuid,
             new_note->>'title',
             (new_note->>'note_type')::public.note_type,
-            (new_note->>'date')::date,
+            epoch_to_timestamp(new_note->>'date'),
             epoch_to_timestamp(new_note->>'created_at'),
             epoch_to_timestamp(new_note->>'updated_at')
         );
@@ -295,7 +295,7 @@ BEGIN
             (updated_note->>'id')::uuid,
             updated_note->>'title',
             (updated_note->>'note_type')::public.note_type,
-            (updated_note->>'date')::date,
+            epoch_to_timestamp(updated_note->>'date'),
             epoch_to_timestamp(updated_note->>'updated_at')
         );
     END LOOP;

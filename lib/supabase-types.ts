@@ -144,7 +144,7 @@ export type Database = {
       pull: {
         Args: {
           last_pulled_at?: number
-          user_id?: string
+          p_user_id?: string
         }
         Returns: Json
       }
