@@ -181,7 +181,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- PULL FUNCTION
-CREATE OR REPLACE FUNCTION public.pull(last_pulled_at bigint DEFAULT 0, p_user_id uuid DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.pull(last_pulled_at bigint DEFAULT 0)
 RETURNS jsonb AS $$
 DECLARE
     _ts timestamp with time zone;
@@ -216,7 +216,7 @@ BEGIN
         )
     ) INTO _notes
     FROM notes n
-    WHERE (n.user_id = p_user_id); -- this is where we do user_id check instead of in the FILTER
+    WHERE (n.user_id = (select auth.uid())); -- this is where we do user_id check instead of in the FILTER
 
     -- Messages
     SELECT jsonb_build_object(
@@ -243,7 +243,7 @@ BEGIN
     ) INTO _messages
     FROM messages m
     JOIN notes n ON m.note_id = n.id
-    WHERE (n.user_id = p_user_id);
+    WHERE (n.user_id = (select auth.uid()));
 
     RETURN jsonb_build_object(
         'changes',
