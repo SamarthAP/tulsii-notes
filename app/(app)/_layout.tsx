@@ -39,6 +39,7 @@ export default function DrawerLayout() {
               borderRadius: 8,
             },
           }}
+          backBehavior="history"
         >
           <Drawer.Screen name="index" options={{ title: "Daily" }} />
           <Drawer.Screen name="all-notes" options={{ title: "All Notes" }} />

@@ -54,7 +54,7 @@ export default function Search() {
             styles.noteItem,
             { backgroundColor: cardBackground, borderColor },
           ]}
-          onPress={() => router.push(`/all-notes/${note.id}`)}
+          onPress={() => router.push(`/search/${note.id}`)}
         >
           <View style={styles.noteHeader}>
             <ThemedText style={styles.noteTitle}>{note.title}</ThemedText>
@@ -72,14 +72,20 @@ export default function Search() {
     } else {
       const message = item as Message;
       return (
-        <View
+        <TouchableOpacity
           style={[styles.messageContainer, { backgroundColor: pastelGreen500 }]}
+          onPress={() => router.push(`/search/${message.noteId}`)}
         >
           <ThemedText style={styles.messageText}>{message.content}</ThemedText>
-          <ThemedText style={[styles.messageDate, { color: textColor }]}>
+          <ThemedText
+            style={[
+              styles.messageDate,
+              { color: textColor, textAlign: "right" },
+            ]}
+          >
             {dayjs(message.updatedAt).format("MMMM D, YYYY h:mm A")}
           </ThemedText>
-        </View>
+        </TouchableOpacity>
       );
     }
   };
@@ -113,7 +119,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchInputContainer: {
-    padding: 16,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   input: {
     borderRadius: 8,

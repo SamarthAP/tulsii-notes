@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 
 // stack layout with hidden header
-export default function AllNotesLayout() {
+export default function SearchLayout() {
   return (
     <Stack
       screenOptions={{
