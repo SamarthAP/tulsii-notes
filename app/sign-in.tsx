@@ -1,5 +1,4 @@
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
 import {
   Alert,
   Button,
@@ -14,12 +13,9 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { router } from "expo-router";
 import z from "zod";
-import LogoSVG from "../components/LogoSVG";
 import {
   pastelGreen500,
   pastelGreen600,
-  pastelGreen700,
-  pastelGreen900,
   pastelGreen950,
 } from "../constants/Colors";
 

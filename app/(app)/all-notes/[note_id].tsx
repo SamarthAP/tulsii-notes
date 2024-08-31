@@ -18,10 +18,7 @@ export default function NotePage() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor }]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.dismiss(1)}
-          style={styles.backButton}
-        >
+        <TouchableOpacity onPress={() => router.dismiss(1)}>
           <Icon name="arrow-left" size={24} color={textColor} />
         </TouchableOpacity>
         <View style={styles.titleContainer}>
@@ -34,7 +31,7 @@ export default function NotePage() {
           </ThemedText>
         </View>
       </View>
-      <ChatView noteId={note_id} />
+      <ChatView noteId={note_id} additionalKeyboardOffset={48} />
     </SafeAreaView>
   );
 }
@@ -47,10 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  backButton: {
-    padding: 8,
+    height: 48,
   },
   titleContainer: {
     flex: 1,

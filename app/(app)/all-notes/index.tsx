@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   StyleSheet,
@@ -11,7 +11,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { database, Note, NoteType } from "@/lib/watermelon";
 import { Q } from "@nozbe/watermelondb";
 import { useSession } from "@/contexts/SessionContext";
-import { pastelGreen500, pastelGreen700 } from "@/constants/Colors";
+import { pastelGreen500 } from "@/constants/Colors";
 import Icon from "@expo/vector-icons/Feather";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";

@@ -12,20 +12,13 @@ import {
   useColorScheme,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import {
-  pastelGreen300,
-  pastelGreen400,
-  pastelGreen500,
-  pastelGreen700,
-} from "@/constants/Colors";
+import { pastelGreen500 } from "@/constants/Colors";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as Crypto from "expo-crypto";
 import { database, Message } from "@/lib/watermelon";
 import { useSession } from "@/contexts/SessionContext";
 import dayjs from "dayjs";
-import { Q } from "@nozbe/watermelondb";
 import { syncAndHandleErrors } from "@/lib/sync";
-import { lg } from "@/utils/noProd";
+import { useMessages } from "@/hooks/useMessages";
 
 const writeNewMessage = async (
   userId: string,
@@ -58,6 +51,10 @@ interface ChatViewProps {
 
 const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
   const { session } = useSession();
+  const { messages: fetchedMessages } = useMessages({
+    userId: session?.user.id || "",
+    noteId,
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const theme = useColorScheme() ?? "light";
   const [inputText, setInputText] = useState("");
@@ -70,25 +67,14 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
     theme === "light" ? pastelGreen500 : pastelGreen500;
   const insets = useSafeAreaInsets();
 
-  // load messages for the note
   useEffect(() => {
-    const loadMessages = async () => {
-      const messages = await database
-        .get<Message>("messages")
-        .query(Q.where("note_id", noteId))
-        .fetch();
-      lg("loaded messages");
-      setMessages(messages);
-
-      // Initialize animation values for existing messages
-      messages.forEach((message) => {
-        if (!animatedValues.current[message.id]) {
-          animatedValues.current[message.id] = new Animated.Value(1);
-        }
-      });
-    };
-    loadMessages();
-  }, [noteId]);
+    setMessages(fetchedMessages);
+    fetchedMessages.forEach((message) => {
+      if (!animatedValues.current[message.id]) {
+        animatedValues.current[message.id] = new Animated.Value(1);
+      }
+    });
+  }, [fetchedMessages]);
 
   const sendMessage = async () => {
     if (inputText.trim() === "" || !noteId) return;
