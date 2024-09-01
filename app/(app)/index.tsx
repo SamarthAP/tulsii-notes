@@ -25,7 +25,6 @@ export async function fetchDailyNote(
       Q.where("note_type", NoteType.Daily)
     )
     .fetch();
-
   return note.length > 0 ? note[0] : null;
 }
 

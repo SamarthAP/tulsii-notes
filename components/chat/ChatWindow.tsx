@@ -85,6 +85,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
       inputText
     );
 
+    // intentionally void the promise to avoid blocking the UI thread
     void syncAndHandleErrors({ userId: session?.user.id || "" });
 
     animatedValues.current[newMessage.id] = new Animated.Value(0);

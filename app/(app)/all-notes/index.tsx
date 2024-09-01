@@ -92,19 +92,39 @@ export default function AllNotes() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }]}>
-      <FlatList
-        data={notes}
-        renderItem={renderNoteItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-      />
-      <TouchableOpacity
-        style={[styles.createButton, { backgroundColor: pastelGreen500 }]}
-        onPress={handleCreateNote}
-      >
-        <Icon name="plus" size={24} color="white" />
-      </TouchableOpacity>
+    <SafeAreaView
+      style={[
+        {
+          flex: 1,
+        },
+        { backgroundColor },
+      ]}
+    >
+      <View style={styles.container}>
+        <View style={styles.heading}>
+          <ThemedText
+            style={{
+              fontSize: 24,
+              fontWeight: "bold",
+            }}
+          >
+            All Notes
+          </ThemedText>
+        </View>
+        <FlatList
+          data={notes}
+          renderItem={renderNoteItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+        />
+        <TouchableOpacity
+          style={[styles.createButton, { backgroundColor: pastelGreen500 }]}
+          onPress={handleCreateNote}
+          disabled={creatingNote}
+        >
+          <Icon name="plus" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -112,10 +132,17 @@ export default function AllNotes() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    flexDirection: "column",
+    padding: 12,
   },
   listContainer: {
-    padding: 16,
+    // padding: 16,
     paddingBottom: 80, // Add some bottom padding to avoid overlap with the create button
+  },
+  heading: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
   },
   noteItem: {
     borderRadius: 8,

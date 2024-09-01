@@ -49,6 +49,7 @@ export default function DrawerLayout() {
           <Drawer.Screen name="index" options={{ title: "Daily" }} />
           <Drawer.Screen name="all-notes" options={{ title: "All Notes" }} />
           <Drawer.Screen name="search" options={{ title: "Search" }} />
+          <Drawer.Screen name="settings" options={{ title: "Settings" }} />
         </Drawer>
       </GestureHandlerRootView>
     </DatabaseProvider>
