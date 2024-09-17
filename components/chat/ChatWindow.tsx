@@ -19,6 +19,9 @@ import { useSession } from "@/contexts/SessionContext";
 import dayjs from "dayjs";
 import { syncAndHandleErrors } from "@/lib/sync";
 import { useMessages } from "@/hooks/useMessages";
+import { useDebounceFunction } from "../../hooks/useDebounceFunction";
+import { lg } from "@/utils/noProd";
+import { useDebouncedSync } from "@/contexts/DebounceSyncContext";
 
 const writeNewMessage = async (
   userId: string,
@@ -51,10 +54,6 @@ interface ChatViewProps {
 
 const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
   const { session } = useSession();
-  const { messages: fetchedMessages } = useMessages({
-    userId: session?.user.id || "",
-    noteId,
-  });
   const [messages, setMessages] = useState<Message[]>([]);
   const theme = useColorScheme() ?? "light";
   const [inputText, setInputText] = useState("");
@@ -66,6 +65,13 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
   const bubbleBackgroundColor =
     theme === "light" ? pastelGreen500 : pastelGreen500;
   const insets = useSafeAreaInsets();
+
+  const { messages: fetchedMessages } = useMessages({
+    userId: session?.user.id || "",
+    noteId,
+  });
+
+  const { debouncedSync } = useDebouncedSync();
 
   useEffect(() => {
     setMessages(fetchedMessages);
@@ -85,12 +91,14 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
       inputText
     );
 
-    // intentionally void the promise to avoid blocking the UI thread
-    void syncAndHandleErrors({ userId: session?.user.id || "" });
+    // // intentionally void the promise to avoid blocking the UI thread
+    // void syncAndHandleErrors({ userId: session?.user.id || "" });
+
+    debouncedSync();
 
     animatedValues.current[newMessage.id] = new Animated.Value(0);
 
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    // setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputText("");
 
     Animated.spring(animatedValues.current[newMessage.id], {
@@ -98,7 +106,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
       friction: 6,
       tension: 40,
       useNativeDriver: true,
-    }).start();
+    }).start(() => {});
 
     // Scroll to the bottom after sending a message
     flatListRef.current?.scrollToEnd({ animated: true });
@@ -170,6 +178,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
         <View style={styles.inputContainer}>
           <TextInput
             ref={inputRef}
+            multiline
             style={[
               styles.input,
               { backgroundColor: cardBackground, color: textColor },
@@ -244,6 +253,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     marginRight: 8,
+    maxHeight: 100,
   },
   sendButton: {
     // backgroundColor: "#007AFF",

@@ -1,4 +1,4 @@
-import { Redirect, SplashScreen, Tabs } from "expo-router";
+import { Redirect, SplashScreen } from "expo-router";
 import { pastelGreen500 } from "@/constants/Colors";
 import { DatabaseProvider } from "@nozbe/watermelondb/DatabaseProvider";
 import { useSession } from "@/contexts/SessionContext";
@@ -8,6 +8,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import CustomDrawerContent from "@/components/CustomDrawerContent";
 import { database } from "@/lib/watermelon";
 import { ActivityIndicator, SafeAreaView } from "react-native";
+import { DebouncedSyncProvider } from "@/contexts/DebounceSyncContext";
 
 export default function DrawerLayout() {
   const { session, loadingSession } = useSession();
@@ -32,26 +33,28 @@ export default function DrawerLayout() {
 
   return (
     <DatabaseProvider database={database}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <Drawer
-          drawerContent={(props) => <CustomDrawerContent {...props} />}
-          screenOptions={{
-            headerShown: false,
-            drawerActiveBackgroundColor: cardBackgroundColor,
-            drawerActiveTintColor: pastelGreen500,
-            drawerInactiveTintColor: mutedColor,
-            drawerItemStyle: {
-              borderRadius: 8,
-            },
-          }}
-          backBehavior="history"
-        >
-          <Drawer.Screen name="index" options={{ title: "Daily" }} />
-          <Drawer.Screen name="all-notes" options={{ title: "All Notes" }} />
-          <Drawer.Screen name="search" options={{ title: "Search" }} />
-          <Drawer.Screen name="settings" options={{ title: "Settings" }} />
-        </Drawer>
-      </GestureHandlerRootView>
+      <DebouncedSyncProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Drawer
+            drawerContent={(props) => <CustomDrawerContent {...props} />}
+            screenOptions={{
+              headerShown: false,
+              drawerActiveBackgroundColor: cardBackgroundColor,
+              drawerActiveTintColor: pastelGreen500,
+              drawerInactiveTintColor: mutedColor,
+              drawerItemStyle: {
+                borderRadius: 8,
+              },
+            }}
+            backBehavior="history"
+          >
+            <Drawer.Screen name="index" options={{ title: "Daily" }} />
+            <Drawer.Screen name="all-notes" options={{ title: "All Notes" }} />
+            <Drawer.Screen name="search" options={{ title: "Search" }} />
+            <Drawer.Screen name="settings" options={{ title: "Settings" }} />
+          </Drawer>
+        </GestureHandlerRootView>
+      </DebouncedSyncProvider>
     </DatabaseProvider>
   );
 }

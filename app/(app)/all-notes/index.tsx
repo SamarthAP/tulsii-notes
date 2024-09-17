@@ -16,6 +16,7 @@ import Icon from "@expo/vector-icons/Feather";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { useNotes } from "@/hooks/useNotes";
+import { useLatestMessage } from "@/hooks/useLatestMessage";
 
 export async function fetchAllNotes(userId: string): Promise<Note[]> {
   const notes = await database
@@ -25,54 +26,51 @@ export async function fetchAllNotes(userId: string): Promise<Note[]> {
   return notes;
 }
 
-export default function AllNotes() {
-  const { session } = useSession();
-  // const [notes, setNotes] = useState<Note[]>([]);
-  const { notes } = useNotes({ userId: session?.user.id || "" });
-  const [creatingNote, setCreatingNote] = useState(false);
-  const backgroundColor = useThemeColor({}, "background");
-  const cardBackground = useThemeColor({}, "cardBackground");
+const NoteItem = ({ item }: { item: Note }) => {
+  const { latestMessage } = useLatestMessage({ noteId: item.id });
   const textMuted = useThemeColor({}, "textMuted");
-  const borderColor = useThemeColor({}, "border");
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const loadNotes = async () => {
-  //     if (session?.user.id) {
-  //       const fetchedNotes = await fetchAllNotes(session.user.id);
-  //       setNotes(fetchedNotes);
-  //     }
-  //   };
-  //   loadNotes();
-  // }, [session?.user.id]);
-
-  const renderNoteItem = ({ item }: { item: Note }) => (
+  return (
     <TouchableOpacity
-      style={[
-        styles.noteItem,
-        { backgroundColor: cardBackground, borderColor },
-      ]}
+      style={[styles.noteItem]}
       onPress={() => {
         router.push(`/all-notes/${item.id}`);
       }}
     >
       <View style={styles.noteHeader}>
         <ThemedText style={styles.noteTitle}>{item.title}</ThemedText>
-        <Icon
-          name={item.noteType === NoteType.Daily ? "calendar" : "file-text"}
-          size={18}
-          color={pastelGreen500}
-        />
+        <ThemedText style={[styles.noteDate, { color: textMuted }]}>
+          {dayjs(latestMessage?.createdAt || item.createdAt).isSame(
+            dayjs(),
+            "day"
+          )
+            ? dayjs(latestMessage?.createdAt || item.createdAt).format("h:mm A")
+            : dayjs().diff(
+                dayjs(latestMessage?.createdAt || item.createdAt),
+                "day"
+              ) < 7
+            ? dayjs(latestMessage?.createdAt || item.createdAt).format("ddd")
+            : dayjs(latestMessage?.createdAt || item.createdAt).format("MM-DD")}
+        </ThemedText>
       </View>
+
       <ThemedText style={[styles.noteDate, { color: textMuted }]}>
-        {dayjs(item.date).format("MMMM D, YYYY")}
+        {latestMessage?.content}
       </ThemedText>
     </TouchableOpacity>
   );
+};
+
+export default function AllNotes() {
+  const { session } = useSession();
+  const { notes } = useNotes({ userId: session?.user.id || "" });
+
+  const [creatingNote, setCreatingNote] = useState(false);
+  const backgroundColor = useThemeColor({}, "background");
+  const router = useRouter();
 
   const handleCreateNote = async () => {
-    // Navigate to a new page for creating a note
-    // router.push("/create-note");
     setCreatingNote(true);
     const createdAt = dayjs().toDate();
     const note = await database.write(async () => {
@@ -110,20 +108,20 @@ export default function AllNotes() {
           >
             All Notes
           </ThemedText>
+          <View>
+            <TouchableOpacity
+              onPress={handleCreateNote}
+              disabled={creatingNote}
+            >
+              <Icon name="edit" size={20} color={pastelGreen500} />
+            </TouchableOpacity>
+          </View>
         </View>
         <FlatList
           data={notes}
-          renderItem={renderNoteItem}
+          renderItem={({ item }) => <NoteItem item={item} />}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
         />
-        <TouchableOpacity
-          style={[styles.createButton, { backgroundColor: pastelGreen500 }]}
-          onPress={handleCreateNote}
-          disabled={creatingNote}
-        >
-          <Icon name="plus" size={24} color="white" />
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -133,28 +131,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "column",
-    padding: 12,
-  },
-  listContainer: {
-    // padding: 16,
-    paddingBottom: 80, // Add some bottom padding to avoid overlap with the create button
   },
   heading: {
     height: 48,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
   },
   noteItem: {
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
+    flex: 1,
+    flexDirection: "column",
+    gap: 4,
+    padding: 12,
   },
   noteHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "space-between",
   },
   noteTitle: {
     fontSize: 18,
@@ -162,20 +156,5 @@ const styles = StyleSheet.create({
   },
   noteDate: {
     fontSize: 14,
-  },
-  createButton: {
-    position: "absolute",
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
 });
