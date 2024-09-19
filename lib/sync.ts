@@ -1,7 +1,9 @@
 import { SyncDatabaseChangeSet, synchronize } from "@nozbe/watermelondb/sync";
-import { database } from "@/lib/watermelon";
+import { database, Message } from "@/lib/watermelon";
 import { supabase } from "@/lib/supabase";
 import { lg } from "@/utils/noProd";
+import { Q } from "@nozbe/watermelondb";
+import * as FileSystem from "expo-file-system";
 
 export async function sync({ userId }: { userId: string }) {
   await synchronize({
@@ -43,6 +45,46 @@ export async function sync({ userId }: { userId: string }) {
       }
 
       lg(`🍉 Changes pushed successfully.`);
+
+      // After pushing changes to Supabase, check for local files that need to be uploaded
+      const messages = await database
+        .get<Message>("messages")
+        .query(Q.where("file_url", Q.notLike("https://%")))
+        .fetch();
+
+      for (const message of messages) {
+        if (message.fileUrl && message.fileUrl.startsWith("file://")) {
+          const fileName = message.fileName || message.fileUrl.split("/").pop();
+          const uploadPath = `${userId}/${fileName}`;
+
+          const { data, error } = await supabase.storage
+            .from("chat-files")
+            .upload(
+              uploadPath,
+              await FileSystem.readAsStringAsync(message.fileUrl, {
+                encoding: FileSystem.EncodingType.Base64,
+              }),
+              {
+                contentType: message.fileMimetype,
+              }
+            );
+
+          if (error) {
+            lg("sync.ts: Error uploading file:", error);
+            continue;
+          }
+
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("chat-files").getPublicUrl(uploadPath);
+
+          await database.write(async () => {
+            await message.update((m) => {
+              m.fileUrl = publicUrl;
+            });
+          });
+        }
+      }
     },
     // With this setting we expect from server that new rows
     // will return in 'updated' key along with updates.
@@ -57,7 +99,7 @@ export async function syncAndHandleErrors({ userId }: { userId: string }) {
     await sync({ userId });
     lg("🍉 Synchronization completed successfully");
   } catch (error) {
-    console.error("🍉 Synchronization error:", error);
+    lg("🍉 Synchronization error:", error);
     // Here you could implement retry logic, user notification, etc.
   }
 }

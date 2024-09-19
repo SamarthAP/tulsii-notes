@@ -14,6 +14,10 @@ export type Database = {
           content: string
           created_at: string
           deleted_at: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           id: string
           last_modified_at: string
           note_id: string
@@ -25,6 +29,10 @@ export type Database = {
           content: string
           created_at?: string
           deleted_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           last_modified_at?: string
           note_id: string
@@ -36,6 +44,10 @@ export type Database = {
           content?: string
           created_at?: string
           deleted_at?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           last_modified_at?: string
           note_id?: string
@@ -75,7 +87,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          date?: string
+          date: string
           deleted_at?: string | null
           id?: string
           last_modified_at?: string
@@ -123,31 +135,51 @@ export type Database = {
         }
         Returns: string
       }
-      create_note: {
-        Args: {
-          p_id: string
-          p_user_id: string
-          p_title: string
-          p_note_type: Database["public"]["Enums"]["note_type"]
-          p_date: string
-          p_created_at: string
-          p_updated_at: string
-        }
-        Returns: string
-      }
+      create_note:
+        | {
+            Args: {
+              p_id: string
+              p_user_id: string
+              p_title: string
+              p_note_type: Database["public"]["Enums"]["note_type"]
+              p_date: string
+              p_created_at: string
+              p_updated_at: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_id: string
+              p_user_id: string
+              p_title: string
+              p_note_type: Database["public"]["Enums"]["note_type"]
+              p_date: string
+              p_created_at: string
+              p_updated_at: string
+            }
+            Returns: string
+          }
       epoch_to_timestamp: {
         Args: {
           epoch: string
         }
         Returns: string
       }
-      pull: {
-        Args: {
-          last_pulled_at?: number
-          p_user_id?: string
-        }
-        Returns: Json
-      }
+      pull:
+        | {
+            Args: {
+              last_pulled_at?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              last_pulled_at?: number
+              p_user_id?: string
+            }
+            Returns: Json
+          }
       push: {
         Args: {
           changes: Json
@@ -168,16 +200,27 @@ export type Database = {
         }
         Returns: boolean
       }
-      update_note: {
-        Args: {
-          p_id: string
-          p_title: string
-          p_note_type: Database["public"]["Enums"]["note_type"]
-          p_date: string
-          p_updated_at: string
-        }
-        Returns: boolean
-      }
+      update_note:
+        | {
+            Args: {
+              p_id: string
+              p_title: string
+              p_note_type: Database["public"]["Enums"]["note_type"]
+              p_date: string
+              p_updated_at: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_id: string
+              p_title: string
+              p_note_type: Database["public"]["Enums"]["note_type"]
+              p_date: string
+              p_updated_at: string
+            }
+            Returns: boolean
+          }
     }
     Enums: {
       note_type: "regular" | "daily"

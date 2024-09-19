@@ -69,11 +69,22 @@ export class Message extends Model {
 
   // @ts-ignore
   @relation("notes", "note_id") note!: Relation<Note>;
+
+  // @ts-ignore
+  @field("file_url") fileUrl?: string;
+  // @ts-ignore
+  @field("file_ext") fileExt?: string;
+  // @ts-ignore
+  @field("file_name") fileName?: string;
+  // @ts-ignore
+  @field("file_size") fileSize?: number;
+  // @ts-ignore
+  @field("file_mimetype") fileMimetype?: string;
 }
 
 // Schema definition
 export const schema = appSchema({
-  version: 1,
+  version: 4, // Increment the version
   tables: [
     tableSchema({
       name: "notes",
@@ -96,6 +107,11 @@ export const schema = appSchema({
         { name: "created_at", type: "number" },
         { name: "updated_at", type: "number" },
         { name: "deleted_at", type: "number", isOptional: true },
+        { name: "file_url", type: "string", isOptional: true },
+        { name: "file_ext", type: "string", isOptional: true },
+        { name: "file_name", type: "string", isOptional: true },
+        { name: "file_size", type: "number", isOptional: true },
+        { name: "file_mimetype", type: "string", isOptional: true },
       ],
     }),
   ],

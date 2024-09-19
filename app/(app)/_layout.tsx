@@ -8,7 +8,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import CustomDrawerContent from "@/components/CustomDrawerContent";
 import { database } from "@/lib/watermelon";
 import { ActivityIndicator, SafeAreaView } from "react-native";
-import { DebouncedSyncProvider } from "@/contexts/DebounceSyncContext";
+import { SyncProvider } from "@/contexts/SyncProviderContext";
 
 export default function DrawerLayout() {
   const { session, loadingSession } = useSession();
@@ -33,7 +33,7 @@ export default function DrawerLayout() {
 
   return (
     <DatabaseProvider database={database}>
-      <DebouncedSyncProvider>
+      <SyncProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <Drawer
             drawerContent={(props) => <CustomDrawerContent {...props} />}
@@ -54,7 +54,7 @@ export default function DrawerLayout() {
             <Drawer.Screen name="settings" options={{ title: "Settings" }} />
           </Drawer>
         </GestureHandlerRootView>
-      </DebouncedSyncProvider>
+      </SyncProvider>
     </DatabaseProvider>
   );
 }

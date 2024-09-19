@@ -10,16 +10,17 @@ import {
 } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { database } from "@/lib/watermelon";
-import { syncAndHandleErrors } from "@/lib/sync";
 import { useSession } from "@/contexts/SessionContext";
 import { router } from "expo-router";
 import { pastelGreen600, pastelGreen950 } from "@/constants/Colors";
 import { ThemedText } from "@/components/ThemedText";
+import { useSync } from "@/contexts/SyncProviderContext";
 
 export default function Settings() {
   const backgroundColor = useThemeColor({}, "background");
   const { session } = useSession();
   const [syncing, setSyncing] = useState(false);
+  const { queueSync } = useSync();
 
   const handleLogout = async () => {
     Alert.alert(
@@ -42,17 +43,9 @@ export default function Settings() {
     );
   };
 
-  const handleSync = async () => {
+  const handleSync = () => {
     if (!session?.user) return;
-    setSyncing(true);
-    try {
-      await syncAndHandleErrors({ userId: session.user.id });
-      Alert.alert("Sync Completed", "Your data has been synchronized.");
-    } catch (error) {
-      Alert.alert("Sync Error", "An error occurred during synchronization.");
-    } finally {
-      setSyncing(false);
-    }
+    queueSync();
   };
 
   return (

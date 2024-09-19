@@ -18,7 +18,6 @@ import {
   pastelGreen600,
   pastelGreen950,
 } from "../constants/Colors";
-import { syncAndHandleErrors } from "@/lib/sync";
 
 const passwordSchema = z
   .string()
@@ -61,7 +60,6 @@ export default function SignIn() {
     if (error) {
       Alert.alert(error.message);
     } else {
-      await syncAndHandleErrors({ userId: user?.id || "" });
       router.push("/(app)/");
     }
     setLoading(false);

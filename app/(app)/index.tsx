@@ -8,7 +8,6 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { Q } from "@nozbe/watermelondb";
 import { database, Note, NoteType } from "@/lib/watermelon";
 import { useSession } from "@/contexts/SessionContext";
-import { syncAndHandleErrors } from "@/lib/sync";
 
 export async function fetchDailyNote(
   userId: string,
@@ -61,10 +60,6 @@ export default function HomeScreen() {
     };
     loadNote();
   }, [session?.user.id, date]);
-
-  useEffect(() => {
-    syncAndHandleErrors({ userId: session?.user.id || "" });
-  }, [session?.user.id]);
 
   return (
     <SafeAreaView

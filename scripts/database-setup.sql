@@ -129,7 +129,12 @@ CREATE OR REPLACE FUNCTION public.create_message(
     p_user_id UUID,
     p_content TEXT,
     p_created_at timestamp with time zone,
-    p_updated_at timestamp with time zone
+    p_updated_at timestamp with time zone,
+    p_file_url TEXT DEFAULT NULL,
+    p_file_ext TEXT DEFAULT NULL,
+    p_file_name TEXT DEFAULT NULL,
+    p_file_size BIGINT DEFAULT NULL,
+    p_file_mimetype TEXT DEFAULT NULL
 ) RETURNS UUID AS $$
 BEGIN
     INSERT INTO public.messages (
@@ -140,7 +145,12 @@ BEGIN
         created_at,
         updated_at,
         server_created_at,
-        last_modified_at
+        last_modified_at,
+        file_url,
+        file_ext,
+        file_name,
+        file_size,
+        file_mimetype
     ) VALUES (
         p_id,
         p_note_id,
@@ -149,14 +159,24 @@ BEGIN
         p_created_at,
         p_updated_at,
         NOW(),
-        NOW()
+        NOW(),
+        p_file_url,
+        p_file_ext,
+        p_file_name,
+        p_file_size,
+        p_file_mimetype
     ) ON CONFLICT (id) DO UPDATE
     SET
         note_id = EXCLUDED.note_id,
         user_id = EXCLUDED.user_id,
         content = EXCLUDED.content,
         updated_at = EXCLUDED.updated_at,
-        last_modified_at = NOW();
+        last_modified_at = NOW(),
+        file_url = EXCLUDED.file_url,
+        file_ext = EXCLUDED.file_ext,
+        file_name = EXCLUDED.file_name,
+        file_size = EXCLUDED.file_size,
+        file_mimetype = EXCLUDED.file_mimetype;
 
     RETURN p_id;
 END;
@@ -230,7 +250,12 @@ BEGIN
                     'user_id', m.user_id,
                     'content', m.content,
                     'created_at', timestamp_to_epoch(m.created_at),
-                    'updated_at', timestamp_to_epoch(m.updated_at)
+                    'updated_at', timestamp_to_epoch(m.updated_at),
+                    'file_url', m.file_url,
+                    'file_ext', m.file_ext,
+                    'file_name', m.file_name,
+                    'file_size', m.file_size,
+                    'file_mimetype', m.file_mimetype
                 )
             ) FILTER (WHERE m.deleted_at IS NULL AND m.last_modified_at > _ts),
             '[]'::jsonb
@@ -309,7 +334,12 @@ BEGIN
             (new_message->>'user_id')::uuid,
             new_message->>'content',
             epoch_to_timestamp(new_message->>'created_at'),
-            epoch_to_timestamp(new_message->>'updated_at')
+            epoch_to_timestamp(new_message->>'updated_at'),
+            new_message->>'file_url',
+            new_message->>'file_ext',
+            new_message->>'file_name',
+            (new_message->>'file_size')::bigint,
+            new_message->>'file_mimetype'
         );
     END LOOP;
 
@@ -329,7 +359,12 @@ BEGIN
         PERFORM update_message(
             (updated_message->>'id')::uuid,
             updated_message->>'content',
-            epoch_to_timestamp(updated_message->>'updated_at')
+            epoch_to_timestamp(updated_message->>'updated_at'),
+            updated_message->>'file_url',
+            updated_message->>'file_ext',
+            updated_message->>'file_name',
+            (updated_message->>'file_size')::bigint,
+            updated_message->>'file_mimetype'
         );
     END LOOP;
 END;
