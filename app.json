@@ -13,15 +13,16 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "usesAppleSignIn": true,
       "supportsTablet": true,
-      "bundleIdentifier": "com.sp22.tulsiinotes"
+      "bundleIdentifier": "app.tulsii.notes"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.sp22.tulsiinotes"
+      "package": "app.tulsii.notes"
     },
     "web": {
       "bundler": "metro",
@@ -41,7 +42,8 @@
           }
         }
       ],
-      "expo-router"
+      "expo-router",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

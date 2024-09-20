@@ -1,7 +1,6 @@
 import { ThemedText } from "@/components/ThemedText";
 import {
   Alert,
-  Button,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -12,12 +11,15 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { router } from "expo-router";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { Platform } from "react-native";
 import z from "zod";
 import {
   pastelGreen500,
   pastelGreen600,
   pastelGreen950,
 } from "../constants/Colors";
+import { lg } from "@/utils/noProd";
 
 const passwordSchema = z
   .string()
@@ -118,75 +120,131 @@ export default function SignIn() {
         </View>
 
         <View style={styles.body}>
-          <TextInput
-            editable={!loading}
-            onChangeText={(text) => setEmail(text)}
-            value={email}
-            placeholder="email@address.com"
-            autoCapitalize={"none"}
-            style={[
-              styles.input,
-              { color: textColor, backgroundColor: cardBackground },
-            ]}
-          />
+          {Platform.OS === "ios" ? (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={
+                AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+              }
+              buttonStyle={
+                AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+              }
+              cornerRadius={5}
+              style={{ width: "100%", height: 48 }}
+              onPress={async () => {
+                try {
+                  const credential = await AppleAuthentication.signInAsync({
+                    requestedScopes: [
+                      AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                      AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                    ],
+                  });
 
-          <TextInput
-            editable={!loading}
-            onChangeText={(text) => setPassword(text)}
-            value={password}
-            secureTextEntry={true}
-            placeholder="Password"
-            autoCapitalize={"none"}
-            style={[
-              styles.input,
-              { color: textColor, backgroundColor: cardBackground },
-            ]}
-          />
+                  // Sign in via Supabase Auth.
+                  if (credential.identityToken) {
+                    const {
+                      error,
+                      data: { user },
+                    } = await supabase.auth.signInWithIdToken({
+                      provider: "apple",
+                      token: credential.identityToken,
+                    });
 
-          <View>
-            <ThemedText style={{ color: texMutedExtraColor }}>
-              Password requirements:
-            </ThemedText>
-            <ThemedText style={{ color: texMutedExtraColor }}>
-              - Lowercase
-            </ThemedText>
-            <ThemedText style={{ color: texMutedExtraColor }}>
-              - Uppercase
-            </ThemedText>
-            <ThemedText style={{ color: texMutedExtraColor }}>
-              - Number
-            </ThemedText>
-            <ThemedText style={{ color: texMutedExtraColor }}>
-              - Symbol
-            </ThemedText>
-          </View>
+                    if (!error) {
+                      // User is signed in.
+                      router.push("/(app)/");
+                    }
+                  } else {
+                    throw new Error("No identityToken.");
+                  }
+                } catch (e) {
+                  // @ts-ignore
+                  lg("Apple error", e);
+                  // @ts-ignore
+                  if (e.code === "ERR_REQUEST_CANCELED") {
+                    // handle that the user canceled the sign-in flow
+                  } else {
+                    // handle other errors
+                  }
+                }
+              }}
+            />
+          ) : (
+            <>
+              <TextInput
+                editable={!loading}
+                onChangeText={(text) => setEmail(text)}
+                value={email}
+                placeholder="email@address.com"
+                autoCapitalize={"none"}
+                style={[
+                  styles.input,
+                  { color: textColor, backgroundColor: cardBackground },
+                ]}
+              />
 
-          <Pressable
-            disabled={loading}
-            style={[
-              styles.button,
-              {
-                borderWidth: 1,
-                borderColor: pastelGreen600,
-              },
-            ]}
-            onPress={signInWithEmail}
-          >
-            <ThemedText style={{ color: pastelGreen600 }}>Log In</ThemedText>
-          </Pressable>
+              <TextInput
+                editable={!loading}
+                onChangeText={(text) => setPassword(text)}
+                value={password}
+                secureTextEntry={true}
+                placeholder="Password"
+                autoCapitalize={"none"}
+                style={[
+                  styles.input,
+                  { color: textColor, backgroundColor: cardBackground },
+                ]}
+              />
 
-          <Pressable
-            disabled={loading}
-            style={[
-              styles.button,
-              {
-                backgroundColor: pastelGreen500,
-              },
-            ]}
-            onPress={signUpWithEmail}
-          >
-            <ThemedText style={{ color: pastelGreen950 }}>Sign Up</ThemedText>
-          </Pressable>
+              <View>
+                <ThemedText style={{ color: texMutedExtraColor }}>
+                  Password requirements:
+                </ThemedText>
+                <ThemedText style={{ color: texMutedExtraColor }}>
+                  - Lowercase
+                </ThemedText>
+                <ThemedText style={{ color: texMutedExtraColor }}>
+                  - Uppercase
+                </ThemedText>
+                <ThemedText style={{ color: texMutedExtraColor }}>
+                  - Number
+                </ThemedText>
+                <ThemedText style={{ color: texMutedExtraColor }}>
+                  - Symbol
+                </ThemedText>
+              </View>
+
+              <Pressable
+                disabled={loading}
+                style={[
+                  styles.button,
+                  {
+                    borderWidth: 1,
+                    borderColor: pastelGreen600,
+                  },
+                ]}
+                onPress={signInWithEmail}
+              >
+                <ThemedText style={{ color: pastelGreen600 }}>
+                  Log In
+                </ThemedText>
+              </Pressable>
+
+              <Pressable
+                disabled={loading}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: pastelGreen500,
+                  },
+                ]}
+                onPress={signUpWithEmail}
+              >
+                <ThemedText style={{ color: pastelGreen950 }}>
+                  Sign Up
+                </ThemedText>
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </SafeAreaView>
