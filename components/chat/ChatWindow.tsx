@@ -489,6 +489,7 @@ function MessageItem({
                 shareFile(itemFile.uri, item.fileName);
               }
             }}
+            activeOpacity={1}
           >
             <Image
               source={{ uri: itemFile.uri }}
@@ -545,7 +546,11 @@ function MessageItem({
           {item.content}
         </Text>
       ) : null}
-      <Modal visible={!!fullScreenImage} transparent={false}>
+      <Modal
+        visible={!!fullScreenImage}
+        transparent={false}
+        animationType="fade"
+      >
         <View style={styles.fullScreenContainer}>
           <TouchableOpacity
             style={[
