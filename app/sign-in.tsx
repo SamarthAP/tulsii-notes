@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StyleSheet,
   TextInput,
+  useColorScheme,
   View,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
@@ -20,6 +21,7 @@ import {
   pastelGreen950,
 } from "../constants/Colors";
 import { lg } from "@/utils/noProd";
+import { syncAndHandleErrors } from "@/lib/sync";
 
 const passwordSchema = z
   .string()
@@ -32,6 +34,7 @@ const passwordSchema = z
 const emailSchema = z.string().email("Invalid email address");
 
 export default function SignIn() {
+  const theme = useColorScheme() ?? "light";
   const backgroundColor = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
   const textMutedColor = useThemeColor({}, "textMuted");
@@ -126,7 +129,9 @@ export default function SignIn() {
                 AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
               }
               buttonStyle={
-                AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                theme === "light"
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
               }
               cornerRadius={5}
               style={{ width: "100%", height: 48 }}
@@ -148,6 +153,8 @@ export default function SignIn() {
                       provider: "apple",
                       token: credential.identityToken,
                     });
+
+                    await syncAndHandleErrors({ userId: user?.id || "" });
 
                     if (!error) {
                       // User is signed in.

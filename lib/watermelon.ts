@@ -84,7 +84,7 @@ export class Message extends Model {
 
 // Schema definition
 export const schema = appSchema({
-  version: 4, // Increment the version
+  version: 1, // Increment the version
   tables: [
     tableSchema({
       name: "notes",

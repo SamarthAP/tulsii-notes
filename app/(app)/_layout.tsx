@@ -42,9 +42,9 @@ export default function DrawerLayout() {
               drawerActiveBackgroundColor: cardBackgroundColor,
               drawerActiveTintColor: pastelGreen500,
               drawerInactiveTintColor: mutedColor,
-              drawerItemStyle: {
-                borderRadius: 8,
-              },
+              // drawerItemStyle: {
+              //   borderRadius: 8,
+              // },
             }}
             backBehavior="history"
           >

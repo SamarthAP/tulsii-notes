@@ -12,7 +12,6 @@ export async function sync({ userId }: { userId: string }) {
       lg(`🍉 Pulling with lastPulledAt = ${lastPulledAt}`);
       const { data, error } = await supabase.rpc("pull", {
         last_pulled_at: lastPulledAt ?? 0,
-        p_user_id: userId,
       });
 
       if (error) {

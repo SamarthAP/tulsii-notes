@@ -105,6 +105,8 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
   const bubbleBackgroundColor =
     theme === "light" ? pastelGreen500 : pastelGreen500;
   const insets = useSafeAreaInsets();
+  const textMutedExtra = useThemeColor({}, "textMutedExtra");
+  const border = useThemeColor({}, "border");
 
   const { messages: fetchedMessages } = useMessages({
     userId: session?.user.id || "",
@@ -338,12 +340,18 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
             multiline
             style={[
               styles.input,
-              { backgroundColor: cardBackground, color: textColor },
+              {
+                backgroundColor: cardBackground,
+                color: textColor,
+                borderColor: border,
+                borderWidth: 1,
+              },
             ]}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Type a message..."
+            placeholder="Start writing..."
             blurOnSubmit={false}
+            placeholderTextColor={textMutedExtra}
           />
           <TouchableOpacity
             onPress={sendMessage}
@@ -423,7 +431,7 @@ function MessageItem({
               });
             };
           } catch (error) {
-            console.error("Error downloading image:", error);
+            lg("Error downloading image:", error);
           }
         }
       }
@@ -449,7 +457,7 @@ function MessageItem({
     try {
       await Sharing.shareAsync(uri, { dialogTitle: `Share ${fileName}` });
     } catch (error) {
-      console.error("Error sharing file:", error);
+      lg("Error sharing file:", error);
     }
   };
 
@@ -604,7 +612,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-end",
     padding: 8,
   },
   input: {
@@ -643,7 +651,6 @@ const styles = StyleSheet.create({
   fileButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
     padding: 8,
     borderRadius: 8,
   },
@@ -655,7 +662,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
     padding: 8,
     borderRadius: 8,
   },
@@ -665,7 +671,6 @@ const styles = StyleSheet.create({
   },
   fullScreenContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.9)",
     justifyContent: "center",
     alignItems: "center",
   },
