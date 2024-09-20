@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   Image,
+  Modal,
 } from "react-native";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { pastelGreen500 } from "@/constants/Colors";
@@ -23,8 +24,10 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 // import NetInfo from "@react-native-community/netinfo";
+import * as Sharing from "expo-sharing";
 import { supabase } from "@/lib/supabase";
 import Icon from "@expo/vector-icons/Feather";
+import IconIon from "@expo/vector-icons/Ionicons";
 import { ResizeMode, Video } from "expo-av";
 import { lg } from "@/utils/noProd";
 import { Session } from "@supabase/supabase-js";
@@ -147,7 +150,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 1,
     });
 
@@ -281,6 +284,21 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
     // inputRef.current?.focus();
   };
 
+  const keyExtractor = useCallback((item: Message) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Message }) => (
+      <MessageItem
+        item={item}
+        session={session}
+        animatedValues={animatedValues}
+        bubbleBackgroundColor={bubbleBackgroundColor}
+        textColor={textColor}
+      />
+    ),
+    [session, bubbleBackgroundColor, textColor]
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <KeyboardAvoidingView
@@ -291,16 +309,8 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
         <FlatList
           ref={flatListRef}
           data={messages}
-          renderItem={({ item }) => (
-            <MessageItem
-              item={item}
-              session={session}
-              animatedValues={animatedValues}
-              bubbleBackgroundColor={bubbleBackgroundColor}
-              textColor={textColor}
-            />
-          )}
-          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
           contentContainerStyle={styles.messageList}
           onContentSizeChange={() =>
             flatListRef.current?.scrollToEnd({ animated: false })
@@ -344,16 +354,12 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
               },
             ]}
           >
-            <Text
-              style={[
-                styles.sendButtonText,
-                {
-                  color: textColor,
-                },
-              ]}
-            >
-              Send
-            </Text>
+            <IconIon
+              name="send"
+              size={24}
+              color={textColor}
+              style={styles.sendButtonText}
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -381,6 +387,8 @@ function MessageItem({
     uri: null,
     mimetype: null,
   });
+  const insets = useSafeAreaInsets();
+  const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadImage = async () => {
@@ -437,10 +445,26 @@ function MessageItem({
     opacity: animatedValues.current[item.id] || 1,
   };
 
+  const shareFile = async (uri: string, fileName: string) => {
+    try {
+      await Sharing.shareAsync(uri, { dialogTitle: `Share ${fileName}` });
+    } catch (error) {
+      console.error("Error sharing file:", error);
+    }
+  };
+
   return (
     <Animated.View
       style={[
-        item.fileUrl ? styles.mediaContainer : styles.messageContainer,
+        {
+          borderRadius: 16,
+          padding: 8,
+          marginTop: 8,
+          flex: 1,
+          flexDirection: "column",
+          maxWidth: "80%",
+          alignSelf: "flex-end",
+        },
         animatedStyle,
         {
           backgroundColor: bubbleBackgroundColor,
@@ -448,19 +472,47 @@ function MessageItem({
       ]}
     >
       {itemFile.uri && itemFile.mimetype?.startsWith("image") && (
-        <Image
-          source={{ uri: itemFile.uri }}
-          style={styles.imageMessage}
-          resizeMode="contain"
-        />
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            width: "100%",
+          }}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+            }}
+            onPress={() => setFullScreenImage(itemFile.uri)}
+            onLongPress={() => {
+              if (itemFile.uri && item.fileName) {
+                shareFile(itemFile.uri, item.fileName);
+              }
+            }}
+          >
+            <Image
+              source={{ uri: itemFile.uri }}
+              style={styles.imageMessage}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
       )}
       {itemFile.uri && itemFile.mimetype?.startsWith("video") && (
-        <Video
-          source={{ uri: itemFile.uri }}
-          style={styles.videoMessage}
-          useNativeControls
-          resizeMode={ResizeMode.CONTAIN}
-        />
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            width: "100%",
+          }}
+        >
+          <Video
+            source={{ uri: itemFile.uri }}
+            style={styles.videoMessage}
+            useNativeControls
+            resizeMode={ResizeMode.CONTAIN}
+          />
+        </View>
       )}
       {itemFile.uri &&
         !(
@@ -469,8 +521,9 @@ function MessageItem({
         ) && (
           <TouchableOpacity
             onPress={() => {
-              // Implement file opening logic here
-              console.log("Open file:", itemFile.uri);
+              if (itemFile.uri && item.fileName) {
+                shareFile(itemFile.uri, item.fileName);
+              }
             }}
             style={styles.fileButton}
           >
@@ -480,16 +533,38 @@ function MessageItem({
             </Text>
           </TouchableOpacity>
         )}
-      <Text
-        style={[
-          styles.messageText,
-          {
-            color: textColor,
-          },
-        ]}
-      >
-        {item.content}
-      </Text>
+      {item.content ? (
+        <Text
+          style={[
+            styles.messageText,
+            {
+              color: textColor,
+            },
+          ]}
+        >
+          {item.content}
+        </Text>
+      ) : null}
+      <Modal visible={!!fullScreenImage} transparent={false}>
+        <View style={styles.fullScreenContainer}>
+          <TouchableOpacity
+            style={[
+              styles.closeButton,
+              {
+                top: insets.top,
+              },
+            ]}
+            onPress={() => setFullScreenImage(null)}
+          >
+            <Icon name="x" size={24} color="white" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: fullScreenImage || undefined }}
+            style={styles.fullScreenImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
     </Animated.View>
   );
 }
@@ -566,7 +641,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.1)",
     padding: 8,
     borderRadius: 8,
-    marginBottom: 8,
   },
   fileName: {
     marginLeft: 8,
@@ -579,12 +653,28 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.1)",
     padding: 8,
     borderRadius: 8,
-    marginHorizontal: 8,
-    marginBottom: 8,
   },
   selectedFileName: {
     fontSize: 14,
     flex: 1,
+  },
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "100%",
+  },
+  closeButton: {
+    position: "absolute",
+    right: 16,
+    zIndex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 100,
+    padding: 8,
   },
 });
 
