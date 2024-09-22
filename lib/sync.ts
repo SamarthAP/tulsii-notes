@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { lg } from "@/utils/noProd";
 import { Q } from "@nozbe/watermelondb";
 import * as FileSystem from "expo-file-system";
+import * as mime from "react-native-mime-types";
+import { Buffer } from "buffer";
 
 export async function sync({ userId }: { userId: string }) {
   await synchronize({
@@ -55,18 +57,24 @@ export async function sync({ userId }: { userId: string }) {
         if (message.fileUrl && message.fileUrl.startsWith("file://")) {
           const fileName = message.fileName || message.fileUrl.split("/").pop();
           const uploadPath = `${userId}/${fileName}`;
+          const contentType =
+            mime.contentType(message.fileName || "") ||
+            "application/octet-stream";
+          const mimeType =
+            mime.lookup(message.fileName || "") || "application/octet-stream";
+
+          const fileString =
+            (await FileSystem.readAsStringAsync(message.fileUrl, {
+              encoding: FileSystem.EncodingType.Base64,
+            })) + `data:${mimeType};base64`.replace(/^.+,/, "");
+
+          const buffer = Buffer.from(fileString, "base64");
 
           const { data, error } = await supabase.storage
             .from("chat-files")
-            .upload(
-              uploadPath,
-              await FileSystem.readAsStringAsync(message.fileUrl, {
-                encoding: FileSystem.EncodingType.Base64,
-              }),
-              {
-                contentType: message.fileMimetype,
-              }
-            );
+            .upload(uploadPath, buffer, {
+              contentType,
+            });
 
           if (error) {
             lg("sync.ts: Error uploading file:", error);

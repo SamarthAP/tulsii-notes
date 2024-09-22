@@ -31,7 +31,6 @@
       }
     },
     "production": {
-      "autoIncrement": true,
       "channel": "production",
       "android": {
         "image": "latest"

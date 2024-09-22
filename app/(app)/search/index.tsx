@@ -96,7 +96,12 @@ export default function Search() {
         <TextInput
           style={[
             styles.input,
-            { color: textColor, backgroundColor: cardBackground },
+            {
+              color: textColor,
+              backgroundColor: cardBackground,
+              borderWidth: 1,
+              borderColor: borderColor,
+            },
           ]}
           placeholder="Search notes and messages..."
           placeholderTextColor={textMuted}

@@ -32,6 +32,7 @@ import { ResizeMode, Video } from "expo-av";
 import { lg } from "@/utils/noProd";
 import { Session } from "@supabase/supabase-js";
 import { useSync } from "@/contexts/SyncProviderContext";
+import * as mime from "react-native-mime-types";
 
 interface WriteNewMessageParams {
   userId: string;
@@ -137,7 +138,7 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
       const asset = result.assets[0];
       const fileName = asset.name;
       const fileExt = fileName.split(".").pop() || "unknown";
-      const mimetype = asset.mimeType || "unknown";
+      const mimetype = mime.lookup(fileName) || "application/octet-stream";
 
       setSelectedFile({
         uri: asset.uri,
@@ -158,7 +159,8 @@ const ChatView = ({ noteId, additionalKeyboardOffset = 0 }: ChatViewProps) => {
 
     if (!result.canceled) {
       const asset = result.assets[0];
-      const mimetype = asset.mimeType || "unknown";
+      const mimetype =
+        mime.lookup(asset.fileName || "") || "application/octet-stream";
 
       const fileExt = asset.uri.split(".").pop() || "unknown";
       let fileName = asset.fileName || ""; // This might be `null` when the name is unavailable or user gave limited permission to access the media library.
@@ -404,13 +406,18 @@ function MessageItem({
         const localUri = `${FileSystem.documentDirectory}${item.fileName}`;
         const fileInfo = await FileSystem.getInfoAsync(localUri);
 
+        lg("loading item", item);
+
         if (fileInfo.exists) {
+          lg("file exists", fileInfo);
           setItemFile({
             uri: localUri,
             mimetype: item.fileMimetype || null,
           });
         } else {
+          lg("file does not exist");
           try {
+            lg("downloading file");
             const { data, error } = await supabase.storage
               .from("chat-files")
               .download(`${session?.user.id}/${item.fileName}`);
@@ -491,7 +498,9 @@ function MessageItem({
             style={{
               flex: 1,
             }}
-            onPress={() => setFullScreenImage(itemFile.uri)}
+            onPress={() => {
+              setFullScreenImage(itemFile.uri);
+            }}
             onLongPress={() => {
               if (itemFile.uri && item.fileName) {
                 shareFile(itemFile.uri, item.fileName);
