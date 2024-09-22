@@ -88,9 +88,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setIsSyncing(true);
 
     try {
-      lg("calling debouncedSync");
       await syncAndHandleErrors({ userId: session?.user.id || "" });
-      lg("debouncedSync call finished");
     } catch (error) {
       lg("Sync failed", { error });
     } finally {

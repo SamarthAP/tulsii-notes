@@ -406,18 +406,13 @@ function MessageItem({
         const localUri = `${FileSystem.documentDirectory}${item.fileName}`;
         const fileInfo = await FileSystem.getInfoAsync(localUri);
 
-        lg("loading item", item);
-
         if (fileInfo.exists) {
-          lg("file exists", fileInfo);
           setItemFile({
             uri: localUri,
             mimetype: item.fileMimetype || null,
           });
         } else {
-          lg("file does not exist");
           try {
-            lg("downloading file");
             const { data, error } = await supabase.storage
               .from("chat-files")
               .download(`${session?.user.id}/${item.fileName}`);
