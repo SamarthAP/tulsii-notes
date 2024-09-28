@@ -41,6 +41,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleId": "samarth.22.patel@gmail.com",
+        "ascAppId": "6705128133",
+        "appleTeamId": "6AMVN4K4PG"
+      }
+    }
   }
 }
