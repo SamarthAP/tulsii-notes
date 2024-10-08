@@ -1,6 +1,6 @@
 # Tulsii Notes
 
-Tulsii is an offline-first note-taking app built to demonstrate the use of WatermelonDB as a local-first database (inspired by [Linear](https://linear.app/)'s offline-first approach and recent developments with InstandDB/ElectricSQL/WatermelonDB).
+Tulsii is an offline-first note-taking app built to demonstrate the use of WatermelonDB as a local-first database (inspired by [Linear](https://linear.app/)'s offline-first approach and recent developments with InstantDB/ElectricSQL/WatermelonDB).
 
 ## Tech Stack
 
